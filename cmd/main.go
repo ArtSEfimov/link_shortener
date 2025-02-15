@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"http_server/configs"
-	"http_server/internal/hello"
+	"http_server/internal/auth"
 	"net/http"
 )
 
@@ -13,7 +13,9 @@ func main() {
 
 	router := http.NewServeMux()
 
-	hello.NewHalloHandler(router)
+	auth.NewAuthHandler(router, auth.AuthHandlerDeps{
+		conf,
+	})
 
 	server := http.Server{
 		Addr:    ":8081",
