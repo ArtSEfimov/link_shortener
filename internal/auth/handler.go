@@ -1,9 +1,9 @@
 package auth
 
 import (
-	"encoding/json"
 	"fmt"
 	"http_server/configs"
+	req "http_server/pkg/request"
 	"http_server/pkg/response"
 	"net/http"
 )
@@ -26,13 +26,11 @@ func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 func (h *AuthHandler) Login() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		var payload LoginRequest
-		decodeErr := json.NewDecoder(request.Body).Decode(&payload)
-		if decodeErr != nil {
-			response.Json(writer, decodeErr.Error(), http.StatusBadRequest)
+		body, handleErr := req.HandleBody[LoginRequest](&writer, request)
+		if handleErr != nil {
+			return
 		}
-
-		fmt.Println(payload)
+		fmt.Println(body)
 
 		data := LoginResponse{
 			Token: "123",
@@ -45,6 +43,11 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 
 func (h *AuthHandler) Register() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		fmt.Println("Register")
+		body, handleErr := req.HandleBody[RegisterRequest](&writer, request)
+		if handleErr != nil {
+			return
+		}
+
+		fmt.Println(body)
 	}
 }
