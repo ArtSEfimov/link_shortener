@@ -2,14 +2,19 @@ package main
 
 import (
 	"fmt"
+	_ "github.com/lib/pq"
 	"http_server/configs"
 	"http_server/internal/auth"
+	"http_server/pkg/db"
 	"net/http"
 )
 
 func main() {
 	conf := configs.LoadConfig()
-	fmt.Println(conf)
+
+	db.NewDB(conf) // TODO: there returns *db
+	fmt.Println("Listening...")
+	//fmt.Println(conf)
 
 	router := http.NewServeMux()
 
