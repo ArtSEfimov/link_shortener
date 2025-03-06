@@ -8,22 +8,22 @@ import (
 	"net/http"
 )
 
-type AuthHandlerDeps struct {
+type HandlerDeps struct {
 	*configs.Config
 }
-type AuthHandler struct {
+type Handler struct {
 	*configs.Config
 }
 
-func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
-	handler := &AuthHandler{
+func NewAuthHandler(router *http.ServeMux, deps HandlerDeps) {
+	handler := &Handler{
 		deps.Config,
 	}
 	router.HandleFunc("POST /auth/login", handler.Login())
 	router.HandleFunc("POST /auth/register", handler.Register())
 }
 
-func (h *AuthHandler) Login() http.HandlerFunc {
+func (h *Handler) Login() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
 		body, handleErr := req.HandleBody[LoginRequest](&writer, request)
@@ -41,7 +41,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 	}
 }
 
-func (h *AuthHandler) Register() http.HandlerFunc {
+func (h *Handler) Register() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		body, handleErr := req.HandleBody[RegisterRequest](&writer, request)
 		if handleErr != nil {

@@ -5,6 +5,7 @@ import (
 	_ "github.com/lib/pq"
 	"http_server/configs"
 	"http_server/internal/auth"
+	"http_server/internal/link"
 	"http_server/pkg/db"
 	"net/http"
 )
@@ -12,15 +13,21 @@ import (
 func main() {
 	conf := configs.LoadConfig()
 
-	db.NewDB(conf) // TODO: there returns *db
+	dataBase := db.NewDB(conf)
 	fmt.Println("Listening...")
 	//fmt.Println(conf)
 
 	router := http.NewServeMux()
 
-	auth.NewAuthHandler(router, auth.AuthHandlerDeps{
+	// Repositories
+	linkRepository := link.NewLinkRepository(dataBase)
+
+	// Handler
+	auth.NewAuthHandler(router, auth.HandlerDeps{
 		conf,
 	})
+
+	link.NewLinkHandler(router, link.HandlerDeps{linkRepository})
 
 	server := http.Server{
 		Addr:    ":8081",
