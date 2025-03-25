@@ -3,7 +3,15 @@ package link
 import (
 	"gorm.io/gorm"
 	"math/rand"
+	"time"
 )
+
+const (
+	MIN = 5
+	MAX = 10
+)
+
+var allowableRunes = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")
 
 type Link struct {
 	gorm.Model
@@ -12,18 +20,23 @@ type Link struct {
 }
 
 func NewLink(urlString string) *Link {
-	return &Link{
-		Url:  urlString,
-		Hash: RandStringRunes(6),
+
+	link := &Link{
+		Url: urlString,
 	}
+
+	link.GenerateHash()
+
+	return link
 }
 
-var allowableRunes = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")
-
-func RandStringRunes(n int) string {
-	hashSlice := make([]rune, n)
+func (link *Link) GenerateHash() {
+	randSource := rand.NewSource(time.Now().Unix())
+	randGen := rand.New(randSource)
+	hashSlice := make([]rune, randGen.Intn(MAX-MIN+1)+MIN)
 	for i := range hashSlice {
-		hashSlice[i] = allowableRunes[rand.Intn(len(allowableRunes))]
+		hashSlice[i] = allowableRunes[randGen.Intn(len(allowableRunes))]
 	}
-	return string(hashSlice)
+
+	link.Hash = string(hashSlice)
 }

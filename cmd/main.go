@@ -20,14 +20,14 @@ func main() {
 	router := http.NewServeMux()
 
 	// Repositories
-	linkRepository := link.NewLinkRepository(dataBase)
+	linkRepository := link.NewRepository(dataBase)
 
 	// Handler
-	auth.NewAuthHandler(router, auth.HandlerDeps{
-		conf,
+	auth.NewHandler(router, auth.HandlerDeps{
+		Config: conf,
 	})
 
-	link.NewLinkHandler(router, link.HandlerDeps{linkRepository})
+	link.NewHandler(router, link.HandlerDeps{LinkRepository: linkRepository})
 
 	server := http.Server{
 		Addr:    ":8081",
