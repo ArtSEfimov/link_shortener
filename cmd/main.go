@@ -7,6 +7,7 @@ import (
 	"http_server/internal/auth"
 	"http_server/internal/link"
 	"http_server/pkg/db"
+	"http_server/pkg/middleware"
 	"net/http"
 )
 
@@ -29,9 +30,15 @@ func main() {
 
 	link.NewHandler(router, link.HandlerDeps{LinkRepository: linkRepository})
 
+	// Middlewares
+	middlewares := middleware.Chain(
+		middleware.Logging,
+		middleware.CORS,
+	)
+
 	server := http.Server{
 		Addr:    ":8081",
-		Handler: router,
+		Handler: middlewares(router),
 	}
 
 	listenErr := server.ListenAndServe()
