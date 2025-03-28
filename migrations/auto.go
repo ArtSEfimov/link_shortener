@@ -5,6 +5,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"http_server/internal/link"
+	"http_server/internal/user"
 	"os"
 )
 
@@ -18,7 +19,7 @@ func main() {
 		panic(openErr)
 	}
 
-	autoMigrateErr := db.AutoMigrate(&link.Link{})
+	autoMigrateErr := db.AutoMigrate(&link.Link{}, &user.User{})
 	if autoMigrateErr != nil {
 		return
 	}

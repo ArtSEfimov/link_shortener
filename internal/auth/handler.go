@@ -10,20 +10,23 @@ import (
 
 type HandlerDeps struct {
 	*configs.Config
+	*Service
 }
 type Handler struct {
 	*configs.Config
+	*Service
 }
 
 func NewHandler(router *http.ServeMux, deps HandlerDeps) {
 	handler := &Handler{
 		deps.Config,
+		deps.Service,
 	}
 	router.HandleFunc("POST /auth/login", handler.Login())
 	router.HandleFunc("POST /auth/register", handler.Register())
 }
 
-func (h *Handler) Login() http.HandlerFunc {
+func (handler *Handler) Login() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
 		body, handleErr := req.HandleBody[LoginRequest](&writer, request)
@@ -41,13 +44,16 @@ func (h *Handler) Login() http.HandlerFunc {
 	}
 }
 
-func (h *Handler) Register() http.HandlerFunc {
+func (handler *Handler) Register() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		body, handleErr := req.HandleBody[RegisterRequest](&writer, request)
 		if handleErr != nil {
 			return
 		}
 
-		fmt.Println(body)
+		_, err := handler.Service.Register(body.Email, body.Password, body.Name)
+		if err != nil {
+			return
+		}
 	}
 }

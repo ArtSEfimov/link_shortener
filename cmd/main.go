@@ -6,6 +6,7 @@ import (
 	"http_server/configs"
 	"http_server/internal/auth"
 	"http_server/internal/link"
+	"http_server/internal/user"
 	"http_server/pkg/db"
 	"http_server/pkg/middleware"
 	"net/http"
@@ -22,10 +23,15 @@ func main() {
 
 	// Repositories
 	linkRepository := link.NewRepository(dataBase)
+	userRepository := user.NewRepository(dataBase)
+
+	// Service
+	authService := auth.NewService(userRepository)
 
 	// Handler
 	auth.NewHandler(router, auth.HandlerDeps{
-		Config: conf,
+		Config:  conf,
+		Service: authService,
 	})
 
 	link.NewHandler(router, link.HandlerDeps{LinkRepository: linkRepository})
