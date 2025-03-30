@@ -1,7 +1,9 @@
 package link
 
 import (
+	"fmt"
 	"gorm.io/gorm"
+	"http_server/configs"
 	"http_server/pkg/middleware"
 	req "http_server/pkg/request"
 	"http_server/pkg/response"
@@ -11,6 +13,7 @@ import (
 
 type HandlerDeps struct {
 	LinkRepository *Repository
+	Config         *configs.Config
 }
 
 type Handler struct {
@@ -22,7 +25,7 @@ func NewHandler(router *http.ServeMux, deps HandlerDeps) {
 		Repository: deps.LinkRepository,
 	}
 	router.HandleFunc("POST /link", handler.Create())
-	router.Handle("PATCH /link/{id}", middleware.IsAuthed(handler.Update()))
+	router.Handle("PATCH /link/{id}", middleware.IsAuthed(handler.Update(), deps.Config))
 	router.HandleFunc("DELETE /link/{id}", handler.Delete())
 	router.HandleFunc("GET /{hash}", handler.GoTo())
 }
@@ -54,6 +57,10 @@ func (h *Handler) Create() http.HandlerFunc {
 }
 func (h *Handler) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if email, ok := r.Context().Value(middleware.ContextEmailKey).(string); ok {
+			fmt.Println(email)
+		}
+
 		body, handleBodyErr := req.HandleBody[UpdateRequest](&w, r)
 		if handleBodyErr != nil {
 			return
