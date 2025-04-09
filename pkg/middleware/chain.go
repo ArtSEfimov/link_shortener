@@ -13,3 +13,15 @@ func Chain(middlewares ...Middleware) Middleware {
 	}
 	return middleware
 }
+
+// Python analogue for a better understanding
+
+//	def chain(*handlers):
+//		def handler(next_handler, *args):
+//			for func in reversed(handlers):
+//				next_handler = func(next_handler, *args)
+//
+//			return next_handler
+//
+//		return handler
+//

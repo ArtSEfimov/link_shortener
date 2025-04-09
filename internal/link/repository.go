@@ -65,3 +65,27 @@ func (repo *Repository) Delete(id uint) error {
 	return nil
 
 }
+
+// OTHER
+
+func (repo *Repository) CountAll() int64 {
+	var count int64
+	repo.Database.
+		Table("links").
+		Where("deleted_at IS NULL").
+		Count(&count)
+
+	return count
+}
+
+func (repo *Repository) GetAll(limit, offset int) []Link {
+	var links []Link
+	repo.Database.Table("links").
+		Where("deleted_at IS NULL").
+		Order("id asc").
+		Limit(limit).
+		Offset(offset).
+		Scan(&links)
+
+	return links
+}

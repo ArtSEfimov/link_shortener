@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 	"http_server/configs"
 	"http_server/pkg/middleware"
-	req "http_server/pkg/request"
+	"http_server/pkg/request"
 	"http_server/pkg/response"
 	"net/http"
 	"strconv"
@@ -28,25 +28,26 @@ func NewHandler(router *http.ServeMux, deps HandlerDeps) {
 	router.Handle("PATCH /link/{id}", middleware.IsAuthed(handler.Update(), deps.Config))
 	router.HandleFunc("DELETE /link/{id}", handler.Delete())
 	router.HandleFunc("GET /{hash}", handler.GoTo())
+	router.Handle("GET /link", middleware.IsAuthed(handler.GetAll(), deps.Config))
 }
 
-func (h *Handler) Create() http.HandlerFunc {
+func (handler *Handler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		body, handleBodyErr := req.HandleBody[CreateRequest](&w, r)
+		body, handleBodyErr := request.HandleBody[CreateRequest](&w, r)
 		if handleBodyErr != nil {
 			return
 		}
 		link := NewLink(body.Url)
 
 		for {
-			_, err := h.Repository.GetByHash(link.Hash)
+			_, err := handler.Repository.GetByHash(link.Hash)
 			if err != nil {
 				break
 			}
 			link.GenerateHash()
 		}
 
-		createdLink, createErr := h.Repository.Create(link)
+		createdLink, createErr := handler.Repository.Create(link)
 		if createErr != nil {
 			http.Error(w, createErr.Error(), http.StatusBadRequest)
 			return
@@ -55,13 +56,13 @@ func (h *Handler) Create() http.HandlerFunc {
 
 	}
 }
-func (h *Handler) Update() http.HandlerFunc {
+func (handler *Handler) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if email, ok := r.Context().Value(middleware.ContextEmailKey).(string); ok {
 			fmt.Println(email)
 		}
 
-		body, handleBodyErr := req.HandleBody[UpdateRequest](&w, r)
+		body, handleBodyErr := request.HandleBody[UpdateRequest](&w, r)
 		if handleBodyErr != nil {
 			return
 		}
@@ -72,7 +73,7 @@ func (h *Handler) Update() http.HandlerFunc {
 			return
 		}
 
-		updatedLink, err := h.Repository.Update(&Link{
+		updatedLink, err := handler.Repository.Update(&Link{
 			Model: gorm.Model{
 				ID: uint(id),
 			},
@@ -87,7 +88,7 @@ func (h *Handler) Update() http.HandlerFunc {
 		response.Json(w, updatedLink, http.StatusOK)
 	}
 }
-func (h *Handler) Delete() http.HandlerFunc {
+func (handler *Handler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idString := r.PathValue("id")
 		id, err := strconv.ParseUint(idString, 10, 32)
@@ -95,11 +96,11 @@ func (h *Handler) Delete() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if _, err := h.Repository.GetById(uint(id)); err != nil {
+		if _, err := handler.Repository.GetById(uint(id)); err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
-		err = h.Repository.Delete(uint(id))
+		err = handler.Repository.Delete(uint(id))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -109,14 +110,37 @@ func (h *Handler) Delete() http.HandlerFunc {
 
 	}
 }
-func (h *Handler) GoTo() http.HandlerFunc {
+func (handler *Handler) GoTo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		hash := r.PathValue("hash")
-		link, err := h.Repository.GetByHash(hash)
+		link, err := handler.Repository.GetByHash(hash)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		http.Redirect(w, r, link.Url, http.StatusTemporaryRedirect)
+	}
+}
+
+func (handler *Handler) GetAll() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+		if err != nil {
+			http.Error(w, "Invalid limit parameter", http.StatusBadRequest)
+		}
+
+		offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
+		if err != nil {
+			http.Error(w, "Invalid offset parameter", http.StatusBadRequest)
+		}
+
+		links := handler.Repository.GetAll(limit, offset)
+		count := handler.Repository.CountAll()
+
+		response.Json(w, GetAllLinksResponse{
+			Links: links,
+			Count: count,
+		}, http.StatusOK,
+		)
 	}
 }
