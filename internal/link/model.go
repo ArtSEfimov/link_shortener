@@ -2,6 +2,7 @@ package link
 
 import (
 	"gorm.io/gorm"
+	"http_server/internal/statistic"
 	"math/rand"
 	"time"
 )
@@ -15,8 +16,9 @@ var allowableRunes = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy
 
 type Link struct {
 	gorm.Model
-	Url  string `json:"url"`
-	Hash string `json:"hash" gorm:"uniqueIndex"`
+	Url        string                `json:"url"`
+	Hash       string                `json:"hash" gorm:"uniqueIndex"`
+	Statistics []statistic.Statistic `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
 
 func NewLink(urlString string) *Link {
