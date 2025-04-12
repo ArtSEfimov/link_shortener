@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 	"http_server/configs"
 	"http_server/pkg/di"
+	"http_server/pkg/event"
 	"http_server/pkg/middleware"
 	"http_server/pkg/request"
 	"http_server/pkg/response"
@@ -13,20 +14,21 @@ import (
 )
 
 type HandlerDeps struct {
-	LinkRepository      *Repository
-	StatisticRepository di.StatisticRepositoryInterface
-	Config              *configs.Config
+	LinkRepository *Repository
+	Config         *configs.Config
+	EventBus       *event.Bus
 }
 
 type Handler struct {
 	Repository          *Repository
 	StatisticRepository di.StatisticRepositoryInterface
+	EventBus            *event.Bus
 }
 
 func NewHandler(router *http.ServeMux, deps HandlerDeps) {
 	handler := &Handler{
-		Repository:          deps.LinkRepository,
-		StatisticRepository: deps.StatisticRepository,
+		Repository: deps.LinkRepository,
+		EventBus:   deps.EventBus,
 	}
 	router.HandleFunc("POST /link", handler.Create())
 	router.Handle("PATCH /link/{id}", middleware.IsAuthed(handler.Update(), deps.Config))
@@ -122,7 +124,11 @@ func (handler *Handler) GoTo() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		handler.StatisticRepository.AddClick(link.ID)
+		//handler.StatisticRepository.AddClick(link.ID)
+		go handler.EventBus.Publish(event.Event{
+			Type: event.LinkVisited,
+			Data: link.ID,
+		})
 		http.Redirect(w, r, link.Url, http.StatusTemporaryRedirect)
 	}
 }

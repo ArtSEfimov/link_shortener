@@ -9,6 +9,7 @@ import (
 	"http_server/internal/statistic"
 	"http_server/internal/user"
 	"http_server/pkg/db"
+	"http_server/pkg/event"
 	"http_server/pkg/middleware"
 	"net/http"
 )
@@ -18,9 +19,10 @@ func main() {
 
 	dataBase := db.NewDB(conf)
 	fmt.Println("Listening...")
-	//fmt.Println(conf)
 
 	router := http.NewServeMux()
+
+	eventBus := event.NewBus()
 
 	// Repositories
 	linkRepository := link.NewRepository(dataBase)
@@ -29,6 +31,10 @@ func main() {
 
 	// Service
 	authService := auth.NewService(userRepository)
+	statisticService := statistic.NewService(statistic.ServiceDeps{
+		EventBus:            eventBus,
+		StatisticRepository: statisticRepository,
+	})
 
 	// Handler
 	auth.NewHandler(router, auth.HandlerDeps{
@@ -37,9 +43,9 @@ func main() {
 	})
 
 	link.NewHandler(router, link.HandlerDeps{
-		LinkRepository:      linkRepository,
-		StatisticRepository: statisticRepository,
-		Config:              conf,
+		LinkRepository: linkRepository,
+		EventBus:       eventBus,
+		Config:         conf,
 	})
 
 	// Middlewares
@@ -52,6 +58,8 @@ func main() {
 		Addr:    ":8081",
 		Handler: middlewares(router),
 	}
+
+	go statisticService.AddClick()
 
 	listenErr := server.ListenAndServe()
 	if listenErr != nil {
