@@ -48,6 +48,11 @@ func main() {
 		Config:         conf,
 	})
 
+	statistic.NewHandler(router, statistic.HandlerDeps{
+		Config:              conf,
+		StatisticRepository: statisticRepository,
+	})
+
 	// Middlewares
 	middlewares := middleware.Chain(
 		middleware.Logging,
