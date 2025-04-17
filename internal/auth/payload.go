@@ -17,8 +17,8 @@ type RegisterResponse struct {
 	Token string `json:"token"`
 }
 
-type userData struct {
-	email    string
-	password string
-	name     string
+type UserData struct {
+	Email    string
+	Password string
+	Name     string
 }

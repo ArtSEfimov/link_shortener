@@ -34,9 +34,9 @@ func (handler *Handler) Login() http.HandlerFunc {
 			return
 		}
 
-		email, err := handler.Service.Login(userData{
-			email:    body.Email,
-			password: body.Password,
+		email, err := handler.Service.Login(UserData{
+			Email:    body.Email,
+			Password: body.Password,
 		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -67,10 +67,10 @@ func (handler *Handler) Register() http.HandlerFunc {
 			return
 		}
 
-		email, err := handler.Service.Register(userData{
-			email:    body.Email,
-			password: body.Password,
-			name:     body.Name,
+		email, err := handler.Service.Register(UserData{
+			Email:    body.Email,
+			Password: body.Password,
+			Name:     body.Name,
 		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -84,7 +84,7 @@ func (handler *Handler) Register() http.HandlerFunc {
 		data := RegisterResponse{
 			Token: token,
 		}
-		response.Json(w, data, http.StatusOK)
+		response.Json(w, data, http.StatusCreated)
 
 	}
 }

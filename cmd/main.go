@@ -14,11 +14,10 @@ import (
 	"net/http"
 )
 
-func main() {
+func App() http.Handler {
 	conf := configs.LoadConfig()
 
 	dataBase := db.NewDB(conf)
-	fmt.Println("Listening...")
 
 	router := http.NewServeMux()
 
@@ -53,21 +52,28 @@ func main() {
 		StatisticRepository: statisticRepository,
 	})
 
+	go statisticService.AddClick()
+
 	// Middlewares
 	middlewares := middleware.Chain(
 		middleware.Logging,
 		middleware.CORS,
 	)
+	return middlewares(router)
+}
+func main() {
+	app := App()
 
 	server := http.Server{
 		Addr:    ":8081",
-		Handler: middlewares(router),
+		Handler: app,
 	}
 
-	go statisticService.AddClick()
-
+	fmt.Println("Listening...")
 	listenErr := server.ListenAndServe()
+
 	if listenErr != nil {
 		panic(listenErr)
 	}
+
 }
